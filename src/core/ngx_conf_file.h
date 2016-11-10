@@ -123,7 +123,7 @@ struct ngx_conf_s {
     char                 *name; //当前解析到的命令名字
     ngx_array_t          *args; //当前命令的所有参数
 
-    ngx_cycle_t          *cycle; //使用的cycle
+    ngx_cycle_t          *cycle; //使用的cycle - （在解析配置文件的时候携带modules）
     ngx_pool_t           *pool; //使用的内存池
     ngx_pool_t           *temp_pool;
     ngx_conf_file_t      *conf_file; //要解析的配置文件

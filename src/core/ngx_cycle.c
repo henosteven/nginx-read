@@ -242,11 +242,15 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         }
 
         //不同模块最大的区分就是这个，好比是ngx_module_s公用属性存放处，context就是各模块自定的地方了
+        //cycle->modules[i]->ctx可以理解为模块的私有环境
+        //不同模块是不一样的
+        //如下所示：只有core类型模块才会有create_conf 和 init_conf这类回调
         module = cycle->modules[i]->ctx;
 
         if (module->create_conf) {
             //create 出一个 ngx_core_conf_t 指针
             //只有初始化部分，没有实际赋值
+            //rv returnvalue *ccf
             rv = module->create_conf(cycle);
             if (rv == NULL) {
                 ngx_destroy_pool(pool);
@@ -292,7 +296,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 #endif
 
     //解析命令行传递的参数
-    //这个方法最后也是调用了下面的ngx_conf_parse
+    //这个方法最后也是调用了下面的ngx_conf_parse，只是把数据放入cf->conf_file->buffer
     //ngx_conf_parse(cf, NULL);
     //因为是命令行参数，所有这里没有设置文件
     if (ngx_conf_param(&conf) != NGX_CONF_OK) {

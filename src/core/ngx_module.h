@@ -250,6 +250,7 @@ struct ngx_module_s {
     //模块的执行环境（也就是模块的配置信息），不同模块的指向不同的结构体
     //ngx_http_module_t
     //ngx_core_module_t
+    //可以理解为模块的私有环境
     void                 *ctx; 
     ngx_command_t        *commands; //模块的命令，这里使用指针指向数组第一个元素
     ngx_uint_t            type; //模块类型

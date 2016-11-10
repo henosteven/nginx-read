@@ -228,6 +228,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
     for ( ;; ) {
 
         //注意观察，这里传入的是指针cf，不是cf->conf_file->buffer之类的数据
+        //所以唯有数据写到cf中
         rc = ngx_conf_read_token(cf);
 
         /*
@@ -290,6 +291,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
                 goto failed;
             }
 
+            //@todo
             rv = (*cf->handler)(cf, NULL, cf->handler_conf);
             if (rv == NGX_CONF_OK) {
                 continue;
@@ -305,6 +307,8 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
         }
 
 
+        //最终调用的是command的set方法（handler）
+        //cf对应的就是对应的ngx_conf_t
         rc = ngx_conf_handler(cf, rc);
 
         if (rc == NGX_ERROR) {
@@ -458,6 +462,7 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
             //void *conf
             conf = NULL;
 
+            //@todo eg:conf.ctx = cycle->conf_ctx;
             if (cmd->type & NGX_DIRECT_CONF) {
                 conf = ((void **) cf->ctx)[cf->cycle->modules[i]->index];
 
@@ -474,8 +479,15 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
 
             //这是命令对应的一些操作行为
             //例如这里会做一些具体的配置，针对服务器或者是命令本省的设置等等
+            //rv = return value
+            //例如 ngx_conf_set_flag_slot
+            //cf   负责传递数据
+            //cmd  标识参数在ngx_xxx_conf_t中的位置
+            //conf 需要设置的ngx_xxx_conf_t，真正写入配置的地方
             rv = cmd->set(cf, cmd, conf);
 
+            //找到最靠前设置的命令就结束了
+            //也就意味着，你在不同模块设置了一样的命令（名字一样），只有在modules中考前的那个才会生效
             if (rv == NGX_CONF_OK) {
                 return NGX_OK;
             }
@@ -1045,6 +1057,7 @@ ngx_conf_set_flag_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return "is duplicate";
     }
 
+    //说明在read_token的时候已经读取了相关参数
     value = cf->args->elts;
 
     if (ngx_strcasecmp(value[1].data, (u_char *) "on") == 0) {
