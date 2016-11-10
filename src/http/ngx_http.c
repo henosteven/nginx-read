@@ -139,6 +139,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
+    //conf是真正需要写入配置的地方
     *(ngx_http_conf_ctx_t **) conf = ctx;
 
 
@@ -213,7 +214,10 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
     }
 
+    //保存住当前的ngx_conf
     pcf = *cf;
+
+    //启用新的ngx_conf
     cf->ctx = ctx;
 
     for (m = 0; cf->cycle->modules[m]; m++) {
@@ -234,6 +238,14 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     cf->module_type = NGX_HTTP_MODULE;
     cf->cmd_type = NGX_HTTP_MAIN_CONF;
+
+    //此时的cf跟之前的已经不一样了，设置了不同的环境之后，重新进入解析方法
+    //开始递归处理
+    //下面的三项值是关键
+    //cf->ctx = ctx;（main server loc）
+    //cf->module_type = NGX_HTTP_MODULE;
+    //cf->cmd_type = NGX_HTTP_MAIN_CONF;
+    //但是需要注意cf的cycle没有变
     rv = ngx_conf_parse(cf, NULL);
 
     if (rv != NGX_CONF_OK) {
