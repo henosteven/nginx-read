@@ -133,7 +133,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     /* the main http context */
-
+    //新建一个context
     ctx = ngx_pcalloc(cf->pool, sizeof(ngx_http_conf_ctx_t));
     if (ctx == NULL) {
         return NGX_CONF_ERROR;
@@ -183,7 +183,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
      * create the main_conf's, the null srv_conf's, and the null loc_conf's
      * of the all http modules
      */
-
+    //初始化所有http模块的的main_conf srv_conf loc_conf
     for (m = 0; cf->cycle->modules[m]; m++) {
         if (cf->cycle->modules[m]->type != NGX_HTTP_MODULE) {
             continue;
@@ -214,7 +214,10 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
     }
 
-    //保存住当前的ngx_conf
+    //保存住当前的ngx_conf，解析完之后还有一个恢复现场的过程
+    //例如：
+    // 解析命令的时候遇见了include，那么就需要将cf->conf_file->buffer数据重新读入
+    // 这样就之前解析到命令的位置就必须要保留住，解析完include之后继续执行
     pcf = *cf;
 
     //启用新的ngx_conf
@@ -235,7 +238,9 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     /* parse inside the http{} block */
-
+    /*
+     * 将整体的解析环境移交给http模块
+     */
     cf->module_type = NGX_HTTP_MODULE;
     cf->cmd_type = NGX_HTTP_MAIN_CONF;
 
@@ -245,6 +250,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     //cf->ctx = ctx;（main server loc）
     //cf->module_type = NGX_HTTP_MODULE;
     //cf->cmd_type = NGX_HTTP_MAIN_CONF;
+    //还有就是cf->conf_file(这个变量保存了当前解析的数据)
     //但是需要注意cf的cycle没有变
     rv = ngx_conf_parse(cf, NULL);
 
@@ -277,6 +283,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             }
         }
 
+        //配置文件合并操作
         rv = ngx_http_merge_servers(cf, cmcf, module, mi);
         if (rv != NGX_CONF_OK) {
             goto failed;

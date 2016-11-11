@@ -2881,12 +2881,15 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     ngx_http_core_srv_conf_t    *cscf, **cscfp;
     ngx_http_core_main_conf_t   *cmcf;
 
+
     ctx = ngx_pcalloc(cf->pool, sizeof(ngx_http_conf_ctx_t));
     if (ctx == NULL) {
         return NGX_CONF_ERROR;
     }
 
     http_ctx = cf->ctx;
+
+    //这完成了一个层级的关联
     ctx->main_conf = http_ctx->main_conf;
 
     /* the server{}'s srv_conf */
@@ -2903,6 +2906,7 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         return NGX_CONF_ERROR;
     }
 
+    //继续遍历一遍模块
     for (i = 0; cf->cycle->modules[i]; i++) {
         if (cf->cycle->modules[i]->type != NGX_HTTP_MODULE) {
             continue;
@@ -2910,6 +2914,11 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 
         module = cf->cycle->modules[i]->ctx;
 
+        /*
+         * 在上一层已经创建了一遍srv_conf loc_conf
+         * 并且在相关命令已经进行了一定程度的设置 
+         */
+        //在这个层级上重新调用一遍create_srv_conf
         if (module->create_srv_conf) {
             mconf = module->create_srv_conf(cf);
             if (mconf == NULL) {
@@ -2919,6 +2928,7 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
             ctx->srv_conf[cf->cycle->modules[i]->ctx_index] = mconf;
         }
 
+        //在这个层级上重新调用一遍create_loc_conf
         if (module->create_loc_conf) {
             mconf = module->create_loc_conf(cf);
             if (mconf == NULL) {
@@ -2949,9 +2959,13 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     /* parse inside server{} */
 
     pcf = *cf;
+
+    //又完成一个解析配置文件环境的切换
+    //尤其需要注意的是这里的ctx  main_conf 直接指向了http的main_conf 但是ser_conf 和 loc_conf 都是新建的
     cf->ctx = ctx;
     cf->cmd_type = NGX_HTTP_SRV_CONF;
 
+    //开始解析server内的内容
     rv = ngx_conf_parse(cf, NULL);
 
     *cf = pcf;
@@ -3013,6 +3027,8 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     }
 
     pctx = cf->ctx;
+
+    //main_conf 和 srv_conf 统一指向上层
     ctx->main_conf = pctx->main_conf;
     ctx->srv_conf = pctx->srv_conf;
 
@@ -3021,6 +3037,7 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         return NGX_CONF_ERROR;
     }
 
+    //遍历所有的http模块，重新创建一个loc_conf
     for (i = 0; cf->cycle->modules[i]; i++) {
         if (cf->cycle->modules[i]->type != NGX_HTTP_MODULE) {
             continue;
@@ -3176,6 +3193,7 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         return NGX_CONF_ERROR;
     }
 
+    //切换解析环境继续进入解析
     save = *cf;
     cf->ctx = ctx;
     cf->cmd_type = NGX_HTTP_LOC_CONF;

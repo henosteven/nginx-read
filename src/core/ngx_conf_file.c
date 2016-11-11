@@ -463,6 +463,7 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
             conf = NULL;
 
             //@todo eg:conf.ctx = cycle->conf_ctx;
+            //核心部分
             if (cmd->type & NGX_DIRECT_CONF) {
                 conf = ((void **) cf->ctx)[cf->cycle->modules[i]->index];
 
@@ -470,6 +471,14 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
                 conf = &(((void **) cf->ctx)[cf->cycle->modules[i]->index]);
 
             } else if (cf->ctx) {
+
+                //例如命令 types
+                //进入到http模块内部的时候，很显然的就是cf->ctx的结构不是上面两项判断的一位数组
+                //而是三个一维数组， main_conf srv_conf loc_conf
+                //p *cmd
+                //$240 = {name = {len = 5, data = 0x4c90fd "types"}, type = 234881281, set = 0x453727 <ngx_http_core_types>, conf = 16, 
+                //offset = 0, post = 0x0}
+                //用于确定当前的配置应该存入哪项
                 confp = *(void **) ((char *) cf->ctx + cmd->conf);
 
                 if (confp) {

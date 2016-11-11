@@ -82,7 +82,7 @@ struct ngx_command_s {
     //但是在自己写模块的过程中，这个函数进行的是一些设置操作，例如：设置了设置了命令的handler
     //在其他的命令中，这个函数可能更多的是设置一些服务器参数
     char               *(*set)(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
-    ngx_uint_t            conf; //决定解析出来的配置存放在那个conf(main - server - loc)
+    ngx_uint_t            conf; //决定解析出来的配置存放在那个conf(main - server - loc), 这个在解析配置文件的时候可以看见具体见ngx_parse_conf->ngx_conf_handler中
     ngx_uint_t            offset;
     void                 *post;
 };
