@@ -642,6 +642,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         }
     }
 
+    //配置文件在之前已经解析完毕，此时开启监听socket
     if (ngx_open_listening_sockets(cycle) != NGX_OK) {
         goto failed;
     }
