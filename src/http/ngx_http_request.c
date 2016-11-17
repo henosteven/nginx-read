@@ -441,6 +441,7 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
     //读取数据
     n = c->recv(c, b->last, size);
 
+    //数据读取完毕之后将事件放回事件池中
     if (n == NGX_AGAIN) {
 
         if (!rev->timer_set) {
@@ -955,6 +956,8 @@ ngx_http_process_request_line(ngx_event_t *rev)
     for ( ;; ) {
 
         if (rc == NGX_AGAIN) {
+
+            //读取头部数据
             n = ngx_http_read_request_header(r);
 
             if (n == NGX_AGAIN || n == NGX_ERROR) {

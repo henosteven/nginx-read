@@ -1356,6 +1356,7 @@ ngx_http_core_try_files_phase(ngx_http_request_t *r,
 }
 
 
+//最后执行阶段
 ngx_int_t
 ngx_http_core_content_phase(ngx_http_request_t *r,
     ngx_http_phase_handler_t *ph)
@@ -1414,6 +1415,7 @@ ngx_http_update_location_config(ngx_http_request_t *r)
 {
     ngx_http_core_loc_conf_t  *clcf;
 
+    //获取出request对应的loc_conf
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
     if (r->method & clcf->limit_except) {
@@ -1485,6 +1487,7 @@ ngx_http_update_location_config(ngx_http_request_t *r)
         r->limit_rate = clcf->limit_rate;
     }
 
+    //设置了request的content_handler
     if (clcf->handler) {
         r->content_handler = clcf->handler;
     }

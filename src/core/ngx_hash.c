@@ -614,6 +614,7 @@ ngx_hash_key(u_char *data, size_t len)
 
     key = 0;
 
+    //#define ngx_hash(key, c)   ((ngx_uint_t) key * 31 + c)
     for (i = 0; i < len; i++) {
         key = ngx_hash(key, data[i]);
     }

@@ -60,7 +60,7 @@ ngx_module_t  ngx_http_echo_module = {
     NGX_MODULE_V1,
     &ngx_http_echo_module_ctx,             /* module context */
     ngx_http_echo_commands,                /* module directives */
-    NGX_HTTP_MODULE,                       /* module type */
+    NGX_HTTP_MODULE,                       /* module type NGX_HTTP_MODULE | NGX_CORE_MODULE | NGX_CONF_MODULE | NGX_EVENT_MODULE | NGX_MAIL_MODULE */
     NULL,                                  /* init master */
     NULL,                                  /* init module */
     NULL,                                  /* init process */
@@ -79,11 +79,17 @@ ngx_http_echo_handler(ngx_http_request_t *r)
     ngx_buf_t *b;
     ngx_chain_t out;
     ngx_http_echo_loc_conf_t *elcf;
+
+    //获取配置项数据
     elcf = ngx_http_get_module_loc_conf(r, ngx_http_echo_module);
+
+    //对请求方式判断，如果不在处理范围内，返回错误
     if(!(r->method & (NGX_HTTP_HEAD|NGX_HTTP_GET|NGX_HTTP_POST)))
     {
         return NGX_HTTP_NOT_ALLOWED;
     }
+
+    //设置响应头信息
     r->headers_out.content_type.len = sizeof("text/html") - 1;
     r->headers_out.content_type.data = (u_char *) "text/html";
     r->headers_out.status = NGX_HTTP_OK;
@@ -96,6 +102,8 @@ ngx_http_echo_handler(ngx_http_request_t *r)
             return rc;
         }
     }
+
+    //设置响应body
     b = ngx_pcalloc(r->pool, sizeof(ngx_buf_t));
     if(b == NULL)
     {
@@ -103,11 +111,11 @@ ngx_http_echo_handler(ngx_http_request_t *r)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
     out.buf = b;
-    out.next = NULL;
+    out.next = NULL; //标记当前为最后数据
     b->pos = elcf->ed.data;
     b->last = elcf->ed.data + (elcf->ed.len);
     b->memory = 1;
-    b->last_buf = 1;
+    b->last_buf = 1; //标记
     rc = ngx_http_send_header(r);
     if(rc != NGX_OK)
     {
