@@ -51,17 +51,32 @@ ngx_rbtree_insert(ngx_rbtree_t *tree, ngx_rbtree_node_t *node)
             temp = node->parent->parent->right;
 
             if (ngx_rbt_is_red(temp)) {
+
+                /* 
+                 * 父节是红，父节点兄弟节点是红
+                 * 直接将父节点和父节点兄弟节点同时处理为黑色(保证路径路过黑色节点长度一致)
+                 * 将祖父节点置为红色，然后继续处理（因为可能祖父节点的父节点为红色）
+                 */
                 ngx_rbt_black(node->parent);
                 ngx_rbt_black(temp);
                 ngx_rbt_red(node->parent->parent);
                 node = node->parent->parent;
 
             } else {
+
+                /**
+                 * 如果是当前点是父节点右节点，左旋一下（大值往上升）
+                 * 然后走下面的统一处理逻辑
+                 */
                 if (node == node->parent->right) {
-                    node = node->parent;
+                    node = node->parent; //此处有疑问
                     ngx_rbtree_left_rotate(root, sentinel, node);
                 }
 
+                /*
+                 * 将父节点处理为黑色，祖父处理为红色
+                 * 将父节点替换祖父节点的位置（也就是右旋）
+                 */
                 ngx_rbt_black(node->parent);
                 ngx_rbt_red(node->parent->parent);
                 ngx_rbtree_right_rotate(root, sentinel, node->parent->parent);
@@ -89,10 +104,12 @@ ngx_rbtree_insert(ngx_rbtree_t *tree, ngx_rbtree_node_t *node)
         }
     }
 
+    //根节点直接处理为黑色
     ngx_rbt_black(*root);
 }
 
 
+//二叉树的插入方法，新插入的节点标记为红色，这点非常重要
 void
 ngx_rbtree_insert_value(ngx_rbtree_node_t *temp, ngx_rbtree_node_t *node,
     ngx_rbtree_node_t *sentinel)
@@ -320,6 +337,8 @@ ngx_rbtree_delete(ngx_rbtree_t *tree, ngx_rbtree_node_t *node)
 }
 
 
+//同理右旋
+//左旋就是把自己的rightnode提上来，自己作为rightnode的leftnode存在
 static ngx_inline void
 ngx_rbtree_left_rotate(ngx_rbtree_node_t **root, ngx_rbtree_node_t *sentinel,
     ngx_rbtree_node_t *node)
@@ -350,6 +369,8 @@ ngx_rbtree_left_rotate(ngx_rbtree_node_t **root, ngx_rbtree_node_t *sentinel,
 }
 
 
+//ngx_rbtree_right_rotate(root, sentinel, node->parent->parent);
+//右旋就是将当前节点的leftnode提上来，自己作为leftnode的rightnode存在
 static ngx_inline void
 ngx_rbtree_right_rotate(ngx_rbtree_node_t **root, ngx_rbtree_node_t *sentinel,
     ngx_rbtree_node_t *node)

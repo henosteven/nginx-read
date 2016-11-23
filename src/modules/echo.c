@@ -125,7 +125,8 @@ ngx_http_echo_handler(ngx_http_request_t *r)
 }
 
 
-//参数转化函数，设置handler
+//参数转化函数，设置handler，设置配置参数值
+//ngx_conf_set_str_slot 为nginx框架方法
 static char *
 ngx_http_echo(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
